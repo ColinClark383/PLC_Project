@@ -1,5 +1,6 @@
 package plc.project;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,9 +29,20 @@ public final class Lexer {
      * whitespace where appropriate.
      */
     public List<Token> lex() {
-        peek("a");
 
-        throw new UnsupportedOperationException(); //TODO
+        //still working on, not finished
+        //what it does now: takes every non-whitespace character and converts it to a single token with index 0
+        List<Token> tokens = new ArrayList<>();
+
+        while(chars.has(0)){
+            if(!(peek(" ") || peek("\\ t") || peek("\\n") || peek("\\r"))){
+                tokens.add(new Token(Token.Type.INTEGER, String.valueOf(chars.get(0)), 0));
+            }
+            chars.advance();
+            chars.skip();
+        }
+
+        return tokens; //TODO
     }
 
     /**
