@@ -30,19 +30,24 @@ public final class Lexer {
      */
     public List<Token> lex() {
 
-        //still working on, not finished
-        //what it does now: takes every non-whitespace character and converts it to a single token with index 0
+        //initialize return variable
         List<Token> tokens = new ArrayList<>();
 
         while(chars.has(0)){
-            if(!(peek(" ") || peek("\\ t") || peek("\\n") || peek("\\r"))){
-                tokens.add(new Token(Token.Type.INTEGER, String.valueOf(chars.get(0)), 0));
+            if(!(peek(" ") || peek("\\t") || peek("\\n") || peek("\\r"))){
+                //not a whitespace!
+                //need to check if this works fine (need to finish more functions to test out functionality)
+                chars.advance();
+                tokens.add(lexToken());
             }
-            chars.advance();
-            chars.skip();
+            else {
+                //white space, skip
+                chars.advance();
+                chars.skip();
+            }
         }
 
-        return tokens; //TODO
+        return tokens; //TODO: Ngl i think this function works but it wouldn't hurt you checking
     }
 
     /**
@@ -54,31 +59,117 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+        //think this all fits the provided definitions
+
+        //check for identifier
+        if ((peek("\\w") && !peek("\\d")) ) {
+            return lexIdentifier();
+        }
+
+        //add check for number
+        //I think + needs to be \\ because it is a regex metacharacter
+        else if(peek("\\d") || peek("\\+") || peek("-")){
+            return lexNumber();
+        }
+
+        //check for char
+        else if(peek("'")){
+            return lexCharacter();
+        }
+
+        //check for string
+        else if(peek("\"")){
+            return lexString();
+        }
+
+        //I guess we doing operators now
+        else {
+            return lexOperator();
+        }
+        //TODO: make sure logic checks out (Logic the Rapper reference?!?!?!?)
     }
 
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+        while((match("\\w") || match("-")) && chars.has(0)){
+            //auto advances
+        }
+        return chars.emit(Token.Type.IDENTIFIER); //TODO: make sure it works(pretty sure it does tho)
     }
 
     public Token lexNumber() {
-        throw new UnsupportedOperationException(); //TODO
+         //TODO: figure out how to do this. Need to figure out how to know if + - is operator or not
+        throw new UnsupportedOperationException();
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        //lets get this out the way
+        match("'");
+        //now the fun begins
+        if(!chars.has(0) || peek("'") || peek("\n")){
+            //cannot be an empty char or new line or end of stream
+            throw new ParseException("damnit it doesn't work", chars.index);
+        }
+
+
+        //check if it is an escape character
+        if(match("\\\\")){
+            lexEscape();
+        }
+        else{
+            //else one character gets advanced
+            chars.advance();
+        }
+
+        if(!chars.has(0)){
+            //make sure there is another character
+            throw new ParseException("no ending single quote", chars.index);
+        }
+
+        if(!match("'")){
+            //char not closed after 1 character, parse error
+            throw new ParseException("char too long", chars.index);
+        }
+
+        return chars.emit(Token.Type.CHARACTER); //TODO: Make sure char works for ALL situations
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+        //here we go
+        match("\\\"");
+
+        while(chars.has(0) && !peek("\\\"")){
+            if(match("\\\\")){
+                lexEscape();
+            }
+            else{
+                chars.advance();
+            }
+        }
+
+        if(!chars.has(0)){
+            //if the while loop is exited and there is no closing string
+            throw new ParseException("unterminated string", chars.index);
+        }
+
+        chars.advance();
+
+        return chars.emit(Token.Type.STRING);
+         //TODO: I think this works out how it should. how bout you add some more test cases ;)?(im tired)
     }
 
     public void lexEscape() {
-        throw new UnsupportedOperationException(); //TODO
+        //let's operate to where the backslash is matched before this function is called
+        //bnrt'"\
+        if(chars.has(0) && (peek("b") || peek("n") || peek("r") || peek("t") || peek("'") || peek("\\\"") || peek("\\\\"))){
+            chars.advance();
+        }
+        else{
+            throw new ParseException("invalid escape", chars.index);
+        }
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        throw new UnsupportedOperationException(); //TODO: this
     }
 
     /**

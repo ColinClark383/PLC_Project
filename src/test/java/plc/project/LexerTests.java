@@ -68,7 +68,10 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "\'c\'", true),
                 Arguments.of("Newline Escape", "\'\\n\'", true),
                 Arguments.of("Empty", "\'\'", false),
-                Arguments.of("Multiple", "\'abc\'", false)
+                Arguments.of("Multiple", "\'abc\'", false),
+                Arguments.of("Unterminated", "\'a", false),
+                Arguments.of("Empty Unterminated", "\'", false),
+                Arguments.of("Multiple Unterminated", "\'abc", false)
         );
     }
 
