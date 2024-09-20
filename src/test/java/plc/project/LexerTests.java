@@ -23,7 +23,11 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "getName", true),
                 Arguments.of("Alphanumeric", "thelegend27", true),
                 Arguments.of("Leading Hyphen", "-five", false),
-                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
+                Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false),
+                Arguments.of("Single Character", "a", true),
+                Arguments.of("Dashes", "a-b-c", true),
+                Arguments.of("Leading Dash", "-EpicFail", false)
+
         );
     }
 
@@ -71,7 +75,9 @@ public class LexerTests {
                 Arguments.of("Multiple", "\'abc\'", false),
                 Arguments.of("Unterminated", "\'a", false),
                 Arguments.of("Empty Unterminated", "\'", false),
-                Arguments.of("Multiple Unterminated", "\'abc", false)
+                Arguments.of("Multiple Unterminated", "\'abc", false),
+                Arguments.of("No Single Quotes", "a", false),
+                Arguments.of("Only Closing Quote", "a\'", false)
         );
     }
 
@@ -87,7 +93,9 @@ public class LexerTests {
                 Arguments.of("Alphabetic", "\"abc\"", true),
                 Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
                 Arguments.of("Unterminated", "\"unterminated", false),
-                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
+                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
+                Arguments.of("Symbols", "\"!@#$%^&*()\"", true),
+                Arguments.of("Newline Unterminated", "\"hello world\n\"", false)
         );
     }
 
@@ -115,6 +123,17 @@ public class LexerTests {
 
     private static Stream<Arguments> testExamples() {
         return Stream.of(
+                Arguments.of("Multiple Tokens 1", "\'\"\'string\"\'\"", Arrays.asList(
+                        new Token(Token.Type.CHARACTER, "\'\"\'", 0),
+                        new Token(Token.Type.IDENTIFIER, "string", 3),
+                        new Token(Token.Type.STRING, "\"'\"", 9)
+                )),
+                Arguments.of("Whitespace Ignored", "I Dislike\t\'W\'\n\"hitespace\t\"", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "I", 0),
+                        new Token(Token.Type.IDENTIFIER, "Dislike", 2),
+                        new Token(Token.Type.CHARACTER, "\'W\'", 10),
+                        new Token(Token.Type.STRING, "\"hitespace\r\"", 14)
+                )),
                 Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "LET", 0),
                         new Token(Token.Type.IDENTIFIER, "x", 4),
@@ -137,6 +156,9 @@ public class LexerTests {
         ParseException exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"unterminated").lex());
         Assertions.assertEquals(13, exception.getIndex());
+        ParseException exeption2 = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("\'c").lex());
+        Assertions.assertEquals(2, exeption2.getIndex());
     }
 
     /**
