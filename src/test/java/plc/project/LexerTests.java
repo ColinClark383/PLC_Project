@@ -132,7 +132,7 @@ public class LexerTests {
                         new Token(Token.Type.IDENTIFIER, "I", 0),
                         new Token(Token.Type.IDENTIFIER, "Dislike", 2),
                         new Token(Token.Type.CHARACTER, "\'W\'", 10),
-                        new Token(Token.Type.STRING, "\"hitespace\r\"", 14)
+                        new Token(Token.Type.STRING, "\"hitespace\t\"", 14)
                 )),
                 Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "LET", 0),
