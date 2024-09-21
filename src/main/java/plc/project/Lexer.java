@@ -98,11 +98,58 @@ public final class Lexer {
     }
 
     public Token lexNumber() {
-         //TODO: figure out how to do this. Need to figure out how to know if + - is operator or not
-        // for now i'm doing this so test cases would work
-        chars.advance();
+        // tracking variable
+        boolean hasSign = false;
+
+        // allow optional + or -
+        if (chars.has(0) && (peek("\\+") || peek("-"))) {
+            hasSign = true;
+            chars.advance();
+        }
+
+        // handle zero integers first
+        if (chars.has(0) && peek("0")) {
+            chars.advance();
+            // check if zero part of decimal
+            if (chars.has(0) && peek("\\.")) {
+                chars.advance();
+                // decimal must be followed by digit
+                if (!chars.has(0) || !(peek("\\d"))) {
+                    throw new ParseException("Invalid Decimal", chars.index);
+                }
+                // handle rest of numbers after .
+                while (peek("\\d")) {
+                    chars.advance();
+                }
+                return chars.emit(Token.Type.DECIMAL);
+            }
+            // cant have +0 or -0 for int
+            if (hasSign) {
+                throw new ParseException("Invalid Integer", chars.index);
+            }
+            else {
+                return chars.emit(Token.Type.INTEGER);
+            }
+        }
+        // handle non-zero integer cases
+        if (chars.has(0) && peek("[1-9]")) {
+            while (peek("\\d")) {
+                chars.advance();
+            }
+        }
+        else {
+            throw new ParseException("Invalid Number", chars.index);
+        }
+        // handle non-zero decimal cases
+        if (chars.has(1) && peek("\\.", "\\d")) {
+            chars.advance();
+            // get rest of digits after .
+            while (peek("\\d")) {
+                chars.advance();
+            }
+            return chars.emit(Token.Type.DECIMAL);
+        }
         return chars.emit(Token.Type.INTEGER);
-        //throw new UnsupportedOperationException();
     }
 
     public Token lexCharacter() {
@@ -111,7 +158,7 @@ public final class Lexer {
         //now the fun begins
         if(!chars.has(0) || peek("'") || peek("\n") ){
             //cannot be an empty char or new line or end of stream
-            throw new ParseException("damnit it doesn't work", chars.index);
+            throw new ParseException("Invalid Character", chars.index);
         }
 
 
@@ -173,7 +220,20 @@ public final class Lexer {
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO: this
+        // 2 character sequences are handled seperatedly
+        if(chars.has(1) && (peek("&", "&") || peek("|", "|") || peek("!", "=") || peek("=", "=") || peek("<", "=") || peek(">", "="))) {
+            chars.advance();
+            chars.advance();
+        }
+        // operator cannot be whitespace or escape sequence
+        else if(chars.has(0) && !Character.isWhitespace(chars.get(0)) && (!peek("\\\\"))) {
+            chars.advance();
+        }
+        else{
+            System.out.println("Unexpected character at index: " + chars.index + " - '" + chars.get(0) + "'");
+            throw new ParseException("Invalid Operator", chars.index);
+        }
+        return chars.emit(Token.Type.OPERATOR);
     }
 
     /**
