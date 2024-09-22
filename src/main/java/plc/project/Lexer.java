@@ -34,7 +34,7 @@ public final class Lexer {
         List<Token> tokens = new ArrayList<>();
 
         while(chars.has(0)){
-            if(!(peek(" ") || peek("\\t") || peek("\\n") || peek("\\r"))){
+            if(!(peek(" ") || peek("\\t") || peek("\\n") || peek("\\r") || peek("\\b"))){
                 //not a whitespace!
                 tokens.add(lexToken());
             }
@@ -94,7 +94,7 @@ public final class Lexer {
         while((match("\\w") || match("-")) && chars.has(0)){
             //auto advances
         }
-        return chars.emit(Token.Type.IDENTIFIER); //TODO: make sure it works(pretty sure it does tho)
+        return chars.emit(Token.Type.IDENTIFIER); //TODO: Testing
     }
 
     public Token lexNumber() {
@@ -181,7 +181,7 @@ public final class Lexer {
             throw new ParseException("char too long", chars.index);
         }
 
-        return chars.emit(Token.Type.CHARACTER); //TODO: Make sure char works for ALL situations
+        return chars.emit(Token.Type.CHARACTER); //TODO: Testing
     }
 
     public Token lexString() {
@@ -205,7 +205,7 @@ public final class Lexer {
         chars.advance();
 
         return chars.emit(Token.Type.STRING);
-         //TODO: I think this works out how it should. how bout you add some more test cases ;)?(im tired)
+         //TODO: Testing
     }
 
     public void lexEscape() {

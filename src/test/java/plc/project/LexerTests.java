@@ -43,7 +43,15 @@ public class LexerTests {
                 Arguments.of("Multiple Digits", "12345", true),
                 Arguments.of("Negative", "-1", true),
                 Arguments.of("Leading Zero", "01", false),
-                Arguments.of("Decimal", "0.1", false)
+                Arguments.of("Decimal", "0.1", false),
+                Arguments.of("Comma", "1,234", false),
+                Arguments.of("Multiple Zeros", "00100", false),
+                Arguments.of("Whitespace", "1 2", false),
+                Arguments.of("Positive", "+12", true),
+                Arguments.of("Zero", "0", true),
+                Arguments.of("Negative Zero", "-0", false),
+                Arguments.of("Only Negative", "-", false),
+                Arguments.of("Only Positive", "+", false)
         );
     }
 
@@ -117,7 +125,12 @@ public class LexerTests {
                 Arguments.of("Character", "(", true),
                 Arguments.of("Comparison", "!=", true),
                 Arguments.of("Space", " ", false),
-                Arguments.of("Tab", "\t", false)
+                Arguments.of("Tab", "\t", false),
+                Arguments.of("Comma", ",", true),
+                Arguments.of("Period", ".", true),
+                Arguments.of("Plus", "+", true),
+                Arguments.of("Multiple Symbols", "##", false),
+                Arguments.of("Backslash", "\\", true)
         );
     }
 
@@ -134,11 +147,33 @@ public class LexerTests {
                         new Token(Token.Type.IDENTIFIER, "string", 3),
                         new Token(Token.Type.STRING, "\"'\"", 9)
                 )),
+                Arguments.of("Multiple Tokens 2", "!====", Arrays.asList(
+                        new Token(Token.Type.OPERATOR, "!=", 0),
+                        new Token(Token.Type.OPERATOR, "==", 2),
+                        new Token(Token.Type.OPERATOR, "=", 4)
+                )),
                 Arguments.of("Whitespace Ignored", "I Dislike\t\'W\'\n\"hitespace\t\"", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "I", 0),
                         new Token(Token.Type.IDENTIFIER, "Dislike", 2),
                         new Token(Token.Type.CHARACTER, "\'W\'", 10),
                         new Token(Token.Type.STRING, "\"hitespace\t\"", 14)
+                )),
+                Arguments.of("Decimal Double Dot", "1.2.3", Arrays.asList(
+                        new Token(Token.Type.DECIMAL, "1.2", 0),
+                        new Token(Token.Type.OPERATOR, ".", 3),
+                        new Token(Token.Type.INTEGER, "3", 4)
+                )),
+                Arguments.of("Plus Sign Multiple Uses", "+1 + +2.3", Arrays.asList(
+                        new Token(Token.Type.INTEGER, "+1", 0),
+                        new Token(Token.Type.OPERATOR, ".", 3),
+                        new Token(Token.Type.DECIMAL, "+2.3", 5)
+                )),
+                Arguments.of("Leading Zeros", "00100 00.0", Arrays.asList(
+                        new Token(Token.Type.INTEGER, "0", 0),
+                        new Token(Token.Type.INTEGER, "0", 1),
+                        new Token(Token.Type.INTEGER, "100", 2),
+                        new Token(Token.Type.INTEGER, "0", 6),
+                        new Token(Token.Type.DECIMAL, "0.0", 7)
                 )),
                 Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "LET", 0),
