@@ -131,6 +131,7 @@ public class LexerTests {
                 Arguments.of("Plus", "+", true),
                 Arguments.of("Multiple Symbols", "##", false),
                 Arguments.of("Backslash", "\\", true)
+                //note: idk if this is supposed to be true or false
         );
     }
 
@@ -152,6 +153,13 @@ public class LexerTests {
                         new Token(Token.Type.OPERATOR, "==", 2),
                         new Token(Token.Type.OPERATOR, "=", 4)
                 )),
+                Arguments.of("Function Call Integer", "5.toString()", Arrays.asList(
+                        new Token(Token.Type.INTEGER, "5", 0),
+                        new Token(Token.Type.OPERATOR, ".", 1),
+                        new Token(Token.Type.IDENTIFIER, "toString", 2),
+                        new Token(Token.Type.OPERATOR, "(", 10),
+                        new Token(Token.Type.OPERATOR, ")", 11)
+                )),
                 Arguments.of("Whitespace Ignored", "I Dislike\t\'W\'\n\"hitespace\t\"", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "I", 0),
                         new Token(Token.Type.IDENTIFIER, "Dislike", 2),
@@ -165,7 +173,7 @@ public class LexerTests {
                 )),
                 Arguments.of("Plus Sign Multiple Uses", "+1 + +2.3", Arrays.asList(
                         new Token(Token.Type.INTEGER, "+1", 0),
-                        new Token(Token.Type.OPERATOR, ".", 3),
+                        new Token(Token.Type.OPERATOR, "+", 3),
                         new Token(Token.Type.DECIMAL, "+2.3", 5)
                 )),
                 Arguments.of("Leading Zeros", "00100 00.0", Arrays.asList(

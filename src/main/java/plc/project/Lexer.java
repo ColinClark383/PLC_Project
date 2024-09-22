@@ -105,6 +105,10 @@ public final class Lexer {
         if (chars.has(0) && (peek("\\+") || peek("-"))) {
             hasSign = true;
             chars.advance();
+            if(!peek("\\d") || (peek("0") && !peek("0", "."))){
+                //+ or - sign is not attached to a valid digit, therefore an operator
+                return chars.emit(Token.Type.OPERATOR);
+            }
         }
 
         // handle zero integers first
