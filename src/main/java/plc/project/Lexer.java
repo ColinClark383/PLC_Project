@@ -230,7 +230,7 @@ public final class Lexer {
             chars.advance();
         }
         // operator cannot be whitespace or escape sequence
-        else if(chars.has(0) && !Character.isWhitespace(chars.get(0)) && (!peek("\\\\"))) {
+        else if(chars.has(0) && !Character.isWhitespace(chars.get(0))) {
             chars.advance();
         }
         else{
