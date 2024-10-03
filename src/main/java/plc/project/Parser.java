@@ -1,6 +1,8 @@
 package plc.project;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -27,7 +29,20 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // initialize lists to hold 0 or more fields/methods
+        List<Ast.Field> fields = new ArrayList<>();
+        List<Ast.Method> methods = new ArrayList<>();
+
+        while (tokens.has(0)) {
+            if (peek("LET")) {
+                fields.add(parseField());
+            } else if (peek("DEF")) {
+                methods.add(parseMethod());
+            } else {
+                throw new ParseException("Unexpected Token at: ", tokens.index);
+            }
+        }
+        return new Ast.Source(fields, methods);
     }
 
     /**
@@ -35,7 +50,41 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // field requires name of identifier, bool for optional const, and optional expression variables
+        String name = "";
+        boolean isConst = false;
+        Ast.Expression expression = null;
+
+        tokens.advance();
+
+        // check for optional const and change bool
+        if (peek("CONST")) {
+            isConst = true;
+            tokens.advance();
+        }
+
+        // check for identifier and get its name
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected Identifier at: ", tokens.index);
+        } else {
+            name = tokens.get(0).getLiteral();
+            tokens.advance();
+        }
+
+        // check for optional '=' and call method to parse expression
+        if (peek("=")) {
+            tokens.advance();
+            expression = parseExpression();
+        }
+
+        // check for semicolon at end of tokens
+        if (!peek(";")) {
+            throw new ParseException("Missing Semicolon at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        return new Ast.Field(name, isConst, Optional.ofNullable(expression));
     }
 
     /**
@@ -43,7 +92,67 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        // methods requires name of identifier, list of parameters, and list of statements
+        String name = "";
+        List<String> params = new ArrayList<>();
+        List<Ast.Statement> statements = new ArrayList<>();
+
+        tokens.advance();
+
+        // check for identifier
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected Identifier at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        // check for left parenthesis
+        if (!peek("(")) {
+            throw new ParseException("Expected Left Parenthesis at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        // check for optional function arguments and add to parameters
+        if (peek(Token.Type.IDENTIFIER)) {
+                params.add(tokens.get(0).getLiteral());
+                tokens.advance();
+            while (peek(",", Token.Type.IDENTIFIER)) {
+                params.add(tokens.get(1).getLiteral());
+                tokens.advance();
+                tokens.advance();
+            }
+        }
+
+        // check for right parenthesis
+        if (!peek(")")) {
+            throw new ParseException("Expected Right Parenthesis at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        // check for DO
+        if (!peek("DO")) {
+            throw new ParseException("Expected DO at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        // check for 1 or more statements
+        if (tokens.has(1) && (!peek("END"))) {
+            statements.add(parseStatement());
+            } else {
+            throw new ParseException("Expected Statement at: ", tokens.index);
+        }
+
+        // check for END at end of tokens
+        if (!peek("END")) {
+                throw new ParseException("Expected END at: ", tokens.index);
+        } else {
+            tokens.advance();
+        }
+
+        return new Ast.Method(name, params, statements);
     }
 
     /**
