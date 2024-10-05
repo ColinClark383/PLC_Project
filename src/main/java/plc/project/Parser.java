@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -213,42 +215,42 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expression parseExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseLogicalExpression(); //TODO
     }
 
     /**
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseEqualityExpression(); //TODO
     }
 
     /**
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseAdditiveExpression(); //TODO
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseMultiplicativeExpression(); //TODO
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseSecondaryExpression(); //TODO
     }
 
     /**
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parsePrimaryExpression(); //TODO
     }
 
     /**
@@ -258,7 +260,68 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expression parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("NIL")){
+            return new Ast.Expression.Literal(null);
+        }
+        else if (match("TRUE")) {
+            return new Ast.Expression.Literal(Boolean.TRUE);
+        }
+        else if(match("FALSE")){
+            return new Ast.Expression.Literal(Boolean.FALSE);
+        }
+        else if(peek(Token.Type.INTEGER)){
+            BigInteger val = new BigInteger(tokens.get(0).getLiteral());
+            tokens.advance();
+            return new Ast.Expression.Literal(val);
+        }
+        else if(peek(Token.Type.DECIMAL)){
+            BigDecimal val = new BigDecimal(tokens.get(0).getLiteral());
+            tokens.advance();
+            return new Ast.Expression.Literal(val);
+        }
+        else if(peek(Token.Type.CHARACTER)){
+            String quoted = new String(tokens.get(0).getLiteral());
+            quoted = quoted.replace("'", "");
+            Character val = quoted.charAt(0);
+            tokens.advance();
+            return new Ast.Expression.Literal(val);
+        }
+        else if (peek(Token.Type.STRING)) {
+            String quoted = new String(tokens.get(0).getLiteral());
+            quoted = quoted.replace("\"", "");
+            tokens.advance();
+            return new Ast.Expression.Literal(quoted);
+        }
+        else if (match("(")) {
+            Ast.Expression group = parseExpression();
+            if(!match(")")){
+                throw new ParseException("Expected ) at:", tokens.index);
+            }
+            return new Ast.Expression.Group(group);
+        }
+        else if (peek(Token.Type.IDENTIFIER)) {
+            Ast.Expression.Literal identifier = new Ast.Expression.Literal(tokens.get(0));
+            tokens.advance();
+            if(!match("(")){
+                return identifier;
+            }
+            List<Ast.Expression> params = new ArrayList<>();
+            while (tokens.has(0) && !peek(")")){
+                params.add(parseExpression());
+                if(!peek(")") && !match(",")){
+                    throw new ParseException("Expected comma or end of function at: ", tokens.index);
+                }
+            }
+            if(peek(")")){
+                tokens.advance();
+                return new Ast.Expression.Function(Optional.empty(), identifier.getLiteral().toString(), params);
+            }
+
+            throw new ParseException("Expected end of function ) at:", tokens.index);
+
+        }
+
+        throw new ParseException("Invalid Expression at:", tokens.index); //TODO
     }
 
     /**
