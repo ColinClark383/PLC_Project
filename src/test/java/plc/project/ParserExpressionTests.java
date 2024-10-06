@@ -96,6 +96,10 @@ final class ParserExpressionTests {
                 Arguments.of("Escape Character",
                         Arrays.asList(new Token(Token.Type.STRING, "\"Hello,\\nWorld!\"", 0)),
                         new Ast.Expression.Literal("Hello,\nWorld!")
+                ),
+                Arguments.of("Escape Character 2",
+                        Arrays.asList(new Token(Token.Type.CHARACTER, "'\\''", 0)),
+                        new Ast.Expression.Literal('\'')
                 )
         );
     }
@@ -254,7 +258,20 @@ final class ParserExpressionTests {
                                 new Ast.Expression.Access(Optional.empty(), "expr2"),
                                 new Ast.Expression.Access(Optional.empty(), "expr3")
                         ))
-                )
+                ),
+                Arguments.of("Called from Variable",
+                        Arrays.asList(
+                                //var.func()
+                                new Token(Token.Type.IDENTIFIER, "var", 0),
+                                new Token(Token.Type.OPERATOR, ".", 3),
+                                new Token(Token.Type.IDENTIFIER, "func", 4),
+                                new Token(Token.Type.OPERATOR, "(", 8),
+                                new Token(Token.Type.OPERATOR, ")", 9)
+                        ),
+                        new Ast.Expression.Function(Optional.of(
+                                new Ast.Expression.Access(Optional.empty(), "var")),
+                                "func", Arrays.asList())
+                        )
         );
     }
 

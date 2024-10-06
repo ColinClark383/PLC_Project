@@ -378,35 +378,102 @@ public final class Parser {
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expression parseLogicalExpression() throws ParseException {
-        return parseEqualityExpression(); //TODO
+        Ast.Expression log = parseEqualityExpression();
+        while(peek("||") || peek("&&")){
+            String op = tokens.get(0).getLiteral();
+            tokens.advance();
+            Ast.Expression.Binary temp = new Ast.Expression.Binary(op, log, parseEqualityExpression());
+            log = temp;
+        }
+        return log;
+        //TODO
     }
 
     /**
      * Parses the {@code equality-expression} rule.
      */
     public Ast.Expression parseEqualityExpression() throws ParseException {
-        return parseAdditiveExpression(); //TODO
+        Ast.Expression eq = parseAdditiveExpression();
+        while(peek("!=") || peek("==") || peek(">=")||peek(">")||peek("<=")||peek("<")){
+            String op = tokens.get(0).getLiteral();
+            tokens.advance();
+            Ast.Expression.Binary temp = new Ast.Expression.Binary(op, eq, parseAdditiveExpression());
+            eq = temp;
+        }
+        return eq; //TODO
     }
 
     /**
      * Parses the {@code additive-expression} rule.
      */
     public Ast.Expression parseAdditiveExpression() throws ParseException {
-        return parseMultiplicativeExpression(); //TODO
+        Ast.Expression add = parseMultiplicativeExpression();
+        while(peek("+") || peek("-")){
+            String op = tokens.get(0).getLiteral();
+            tokens.advance();
+            Ast.Expression.Binary temp = new Ast.Expression.Binary(op, add, parseMultiplicativeExpression());
+            add = temp;
+        }
+        return add; //TODO
     }
 
     /**
      * Parses the {@code multiplicative-expression} rule.
      */
     public Ast.Expression parseMultiplicativeExpression() throws ParseException {
-        return parseSecondaryExpression(); //TODO
+        Ast.Expression Mul = parseSecondaryExpression();
+        while(peek("*") || peek("/")){
+            String op = tokens.get(0).getLiteral();
+            tokens.advance();
+            Ast.Expression.Binary temp = new Ast.Expression.Binary(op, Mul, parseSecondaryExpression());
+            Mul = temp;
+        }
+        return Mul;
+        //TODO
     }
 
     /**
      * Parses the {@code secondary-expression} rule.
      */
     public Ast.Expression parseSecondaryExpression() throws ParseException {
-        return parsePrimaryExpression(); //TODO
+        Ast.Expression first = parsePrimaryExpression();
+        Token right;
+        while(Boolean.TRUE){
+            if(!peek(".")){
+                //must start with a period to extend expression
+                return first;
+            }
+            tokens.advance();
+            if(!peek(Token.Type.IDENTIFIER)){
+                //must be identifier
+                throw new ParseException("Expected identifier at:", tokens.index);
+            }
+            right = tokens.get(0);
+            tokens.advance();
+            if(match("(")){
+                //Function call inside
+                List<Ast.Expression> params = new ArrayList<>();
+                while (tokens.has(0) && !peek(")")){
+                    params.add(parseExpression());
+                    if(!peek(")") && !match(",")){
+                        throw new ParseException("Expected comma or end of function at: ", tokens.index);
+                    }
+                }
+                if(peek(")")){
+                    tokens.advance();
+                    Ast.Expression temp = new Ast.Expression.Function(Optional.of(first), right.getLiteral(), params);
+                    first = temp;
+                }
+
+            }
+            else{
+                //variable call inside
+                Ast.Expression temp = new Ast.Expression.Access(Optional.of(first), right.getLiteral());
+                first = temp;
+            }
+        }
+        throw new ParseException("Expected end of expression at:", tokens.index);
+        //TODO
     }
 
     /**
@@ -437,14 +504,18 @@ public final class Parser {
         }
         else if(peek(Token.Type.CHARACTER)){
             String quoted = new String(tokens.get(0).getLiteral());
-            quoted = quoted.replace("'", "");
+            quoted = quoted.substring(1, quoted.length()-1);
+            quoted = quoted.replace("\\b", "\b").replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t");
+            quoted = quoted.replace("\\'", "'").replace("\\\\", "\\").replace("\\\"", "\"");
             Character val = quoted.charAt(0);
             tokens.advance();
             return new Ast.Expression.Literal(val);
         }
         else if (peek(Token.Type.STRING)) {
             String quoted = new String(tokens.get(0).getLiteral());
-            quoted = quoted.replace("\"", "");
+            quoted = quoted.substring(1, quoted.length()-1);
+            quoted = quoted.replace("\\b", "\b").replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t");
+            quoted = quoted.replace("\\'", "'").replace("\\\\", "\\").replace("\\\"", "\"");
             tokens.advance();
             return new Ast.Expression.Literal(quoted);
         }
@@ -456,10 +527,10 @@ public final class Parser {
             return new Ast.Expression.Group(group);
         }
         else if (peek(Token.Type.IDENTIFIER)) {
-            Ast.Expression.Literal identifier = new Ast.Expression.Literal(tokens.get(0));
+            String literal = tokens.get(0).getLiteral();
             tokens.advance();
             if(!match("(")){
-                return identifier;
+                return new Ast.Expression.Access(Optional.empty(), literal);
             }
             List<Ast.Expression> params = new ArrayList<>();
             while (tokens.has(0) && !peek(")")){
@@ -470,14 +541,14 @@ public final class Parser {
             }
             if(peek(")")){
                 tokens.advance();
-                return new Ast.Expression.Function(Optional.empty(), identifier.getLiteral().toString(), params);
+                return new Ast.Expression.Function(Optional.empty(), literal, params);
             }
 
             throw new ParseException("Expected end of function ) at: ", tokens.index);
 
         }
 
-        throw new ParseException("Invalid Expression at: ", tokens.index); //TODO
+        throw new ParseException("Invalid/Missing Expression at: ", tokens.index); //TODO
     }
 
     /**
