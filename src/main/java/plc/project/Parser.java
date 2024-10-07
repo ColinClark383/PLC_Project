@@ -446,7 +446,7 @@ public final class Parser {
             tokens.advance();
             if(!peek(Token.Type.IDENTIFIER)){
                 //must be identifier
-                throw new ParseException("Expected identifier at:", tokens.index);
+                throw new ParseException("Expected identifier at:", tokens.get(0).getIndex());
             }
             right = tokens.get(0);
             tokens.advance();
@@ -455,8 +455,13 @@ public final class Parser {
                 List<Ast.Expression> params = new ArrayList<>();
                 while (tokens.has(0) && !peek(")")){
                     params.add(parseExpression());
-                    if(!peek(")") && !match(",")){
-                        throw new ParseException("Expected comma or end of function at: ", tokens.index);
+                    if(!peek(")") && !peek(",")){
+                        throw new ParseException("Expected comma or end of function at: ", tokens.get(0).getIndex());
+                    }
+                    if(match(",")){
+                        if(peek(")")){
+                            throw new ParseException("Expected Expression After Comma at: ", tokens.get(0).getIndex());
+                        }
                     }
                 }
                 if(peek(")")){
@@ -472,7 +477,7 @@ public final class Parser {
                 first = temp;
             }
         }
-        throw new ParseException("Expected end of expression at:", tokens.index);
+        throw new ParseException("Expected end of expression at:", tokens.get(0).getIndex());
         //TODO
     }
 
@@ -522,7 +527,7 @@ public final class Parser {
         else if (match("(")) {
             Ast.Expression group = parseExpression();
             if(!match(")")){
-                throw new ParseException("Expected ) at: ", tokens.index);
+                throw new ParseException("Expected ) at: ", tokens.get(0).getIndex());
             }
             return new Ast.Expression.Group(group);
         }
@@ -535,8 +540,13 @@ public final class Parser {
             List<Ast.Expression> params = new ArrayList<>();
             while (tokens.has(0) && !peek(")")){
                 params.add(parseExpression());
-                if(!peek(")") && !match(",")){
-                    throw new ParseException("Expected comma or end of function at: ", tokens.index);
+                if(!peek(")") && !peek(",")){
+                    throw new ParseException("Expected comma or end of function at: ", tokens.get(0).getIndex());
+                }
+                if(match(",")){
+                    if(!peek(")")){
+                        throw new ParseException("Expected Expression After comma at: ", tokens.get(0).getIndex());
+                    }
                 }
             }
             if(peek(")")){
@@ -544,11 +554,11 @@ public final class Parser {
                 return new Ast.Expression.Function(Optional.empty(), literal, params);
             }
 
-            throw new ParseException("Expected end of function ) at: ", tokens.index);
+            throw new ParseException("Expected end of function ) at: ", tokens.get(0).getIndex());
 
         }
 
-        throw new ParseException("Invalid/Missing Expression at: ", tokens.index); //TODO
+        throw new ParseException("Invalid/Missing Expression at: ", tokens.get(0).getIndex()); //TODO
     }
 
     /**
