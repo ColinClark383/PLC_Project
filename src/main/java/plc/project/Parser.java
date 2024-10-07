@@ -41,7 +41,7 @@ public final class Parser {
             } else if (peek("DEF")) {
                 methods.add(parseMethod());
             } else {
-                throw new ParseException("Unexpected Token at: ", tokens.index);
+                throw new ParseException("Unexpected Token at: ", tokens.get(0).getIndex());
             }
         }
         return new Ast.Source(fields, methods);
@@ -67,7 +67,7 @@ public final class Parser {
 
         // check for identifier and get its name
         if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected Identifier at: ", tokens.index);
+            throw new ParseException("Expected Identifier at: ", tokens.get(0).getIndex());
         } else {
             name = tokens.get(0).getLiteral();
             tokens.advance();
@@ -81,7 +81,7 @@ public final class Parser {
 
         // check for semicolon at end of tokens
         if (!match(";")) {
-            throw new ParseException("Expected Semicolon at: ", tokens.index);
+            throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Field(name, isConst, Optional.ofNullable(expression));
@@ -100,13 +100,15 @@ public final class Parser {
         tokens.advance();
 
         // check for identifier
-        if (!match(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected Identifier at: ", tokens.index);
+        if (!peek(Token.Type.IDENTIFIER)) {
+            throw new ParseException("Expected Identifier at: ", tokens.get(0).getIndex());
         }
+        name = tokens.get(0).getLiteral();
+        tokens.advance();
 
         // check for left parenthesis
         if (!match("(")) {
-            throw new ParseException("Expected ( at: ", tokens.index);
+            throw new ParseException("Expected ( at: ", tokens.get(0).getIndex());
         }
 
         // check for optional function arguments and add to parameters
@@ -122,24 +124,24 @@ public final class Parser {
 
         // check for right parenthesis
         if (!match(")")) {
-            throw new ParseException("Expected ) at: ", tokens.index);
+            throw new ParseException("Expected ) at: ", tokens.get(0).getIndex());
         }
 
         // check for DO
         if (!match("DO")) {
-            throw new ParseException("Expected DO at: ", tokens.index);
+            throw new ParseException("Expected DO at: ", tokens.get(0).getIndex());
         }
 
         // check for 1 or more statements
         if (tokens.has(1) && (!peek("END"))) {
             statements.add(parseStatement());
             } else {
-            throw new ParseException("Expected Statement at: ", tokens.index);
+            throw new ParseException("Expected Statement at: ", tokens.get(0).getIndex());
         }
 
         // check for END at end of tokens
         if (!match("END")) {
-                throw new ParseException("Expected END at: ", tokens.index);
+                throw new ParseException("Expected END at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Method(name, params, statements);
@@ -172,17 +174,17 @@ public final class Parser {
                 if (match("=") && tokens.has(1)) {
                     Ast.Expression value = parseExpression();
                     if (!match(";")) {
-                        throw new ParseException("Expected Semicolon at: ", tokens.index);
+                        throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
                     }
                     return new Ast.Statement.Assignment(expression, value);
                 }
                 if (!match(";")) {
-                    throw new ParseException("Expected Semicolon at: ", tokens.index);
+                    throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
                 }
                 return new Ast.Statement.Expression(expression);
             }
         }
-        throw new ParseException("Expected Statement at: ", tokens.index);
+        throw new ParseException("Expected Statement at: ", tokens.get(0).getIndex());
     }
 
     /**
@@ -196,7 +198,7 @@ public final class Parser {
         Ast.Expression expression = null;
         // check for identifier
         if (!peek(Token.Type.IDENTIFIER)) {
-            throw new ParseException("Expected Identifier at: ", tokens.index);
+            throw new ParseException("Expected Identifier at: ", tokens.get(0).getIndex());
         } else {
             name = tokens.get(0).getLiteral();
             tokens.advance();
@@ -210,7 +212,7 @@ public final class Parser {
 
         // check for semicolon at end of tokens
         if (!match(";")) {
-            throw new ParseException("Expected Semicolon at: ", tokens.index);
+            throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Statement.Declaration(name, Optional.ofNullable(expression));
@@ -234,7 +236,7 @@ public final class Parser {
 
         // check for "DO"
         if (!match("DO")) {
-            throw new ParseException("Expected DO at: ", tokens.index);
+            throw new ParseException("Expected DO at: ", tokens.get(0).getIndex());
         }
 
         // check for 1 or more statements
@@ -249,7 +251,7 @@ public final class Parser {
 
         // check for END at end of tokens
         if (!match("END")) {
-            throw new ParseException("Expected END at: ", tokens.index);
+            throw new ParseException("Expected END at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Statement.If(condition, thenStatement, elseStatement);
@@ -269,30 +271,35 @@ public final class Parser {
 
         // check for left parenthesis
         if (!match("(")) {
-            throw new ParseException("Expected ( at: ", tokens.index);
+            throw new ParseException("Expected ( at: ", tokens.get(0).getIndex());
         }
 
         // check for optional initialization statement
-        if (match(Token.Type.IDENTIFIER, "=")) {
-            Ast.Expression expression = parseExpression();
-            initial = new Ast.Statement.Expression(expression);
+        if (peek(Token.Type.IDENTIFIER, "=")) {
+            String name = tokens.get(0).getLiteral();
+            tokens.advance();
+            tokens.advance();
+            Ast.Expression value = parseExpression();
+            initial = new Ast.Statement.Declaration(name, Optional.ofNullable(value));
         }
 
         // check for semicolon
         if (!match(";")) {
-            throw new ParseException("Expected Semicolon at: ", tokens.index);
+            throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
         }
         condition = parseExpression();
 
         // check for semicolon
         if (!match(";")) {
-            throw new ParseException("Expected Semicolon at: ", tokens.index);
+            throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
         }
 
         // check for optional increment statement
-        if (match(Token.Type.IDENTIFIER, "=")) {
-            Ast.Expression expression = parseExpression();
-            increment = new Ast.Statement.Expression(expression);
+        if (peek(Token.Type.IDENTIFIER, "=")) {
+            Ast.Expression rec = parseExpression();
+            tokens.advance();
+            Ast.Expression value = parseExpression();
+            increment = new Ast.Statement.Assignment(rec, value);
         }
 
         // check for 1 or more statements
@@ -302,11 +309,11 @@ public final class Parser {
 
         // check for right parenthesis
         if (!match(")")) {
-            throw new ParseException("Expected ) at: ", tokens.index);
+            throw new ParseException("Expected ) at: ", tokens.get(0).getIndex());
         }
         // check for END at end of tokens
         if (match("END")) {
-            throw new ParseException("Expected END at: ", tokens.index);
+            throw new ParseException("Expected END at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Statement.For(initial, condition, increment, statements);
@@ -329,7 +336,7 @@ public final class Parser {
 
         // check for DO
         if (!match("DO")) {
-            throw new ParseException("Expected DO at: ", tokens.index);
+            throw new ParseException("Expected DO at: ", tokens.get(0).getIndex());
         }
 
         // check for statements
@@ -339,7 +346,7 @@ public final class Parser {
 
         // check for END at end of tokens
         if (!match("END")) {
-            throw new ParseException("Expected END at: ", tokens.index);
+            throw new ParseException("Expected END at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Statement.While(condition, statements);
@@ -361,7 +368,7 @@ public final class Parser {
 
         // check for semicolon at end of tokens
         if (!match(";")) {
-            throw new ParseException("Expected Semicolon at: ", tokens.index);
+            throw new ParseException("Expected Semicolon at: ", tokens.get(0).getIndex());
         }
 
         return new Ast.Statement.Return(value);
