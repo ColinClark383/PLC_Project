@@ -544,7 +544,7 @@ public final class Parser {
                     throw new ParseException("Expected comma or end of function at: ", tokens.get(0).getIndex());
                 }
                 if(match(",")){
-                    if(!peek(")")){
+                    if(peek(")")){
                         throw new ParseException("Expected Expression After comma at: ", tokens.get(0).getIndex());
                     }
                 }
