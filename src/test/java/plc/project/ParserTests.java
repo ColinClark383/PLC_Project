@@ -140,6 +140,14 @@ final class ParserTests {
                                 new Ast.Expression.Access(Optional.empty(), "name"),
                                 new Ast.Expression.Access(Optional.empty(), "value")
                         )
+                ),
+                Arguments.of("Assignment Missing Value",
+                        Arrays.asList(
+                                // name = ;
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "=", 5),
+                                new Token(Token.Type.OPERATOR, ";", 7)
+                        ), null
                 )
         );
     }
@@ -435,6 +443,38 @@ final class ParserTests {
                                 new Token(Token.Type.OPERATOR, ")", 11)
                         ),
                         new Ast.Expression.Function(Optional.of(new Ast.Expression.Access(Optional.empty(), "obj")), "method", Arrays.asList())
+                ),
+                Arguments.of("Arguments with Trailing Comma",
+                        Arrays.asList(
+                                // name(expr1, expr2, expr3, )
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 5),
+                                new Token(Token.Type.OPERATOR, ",", 10),
+                                new Token(Token.Type.IDENTIFIER, "expr2", 12),
+                                new Token(Token.Type.OPERATOR, ",", 17),
+                                new Token(Token.Type.IDENTIFIER, "expr3", 19),
+                                new Token(Token.Type.OPERATOR, ",", 24),
+                                new Token(Token.Type.OPERATOR, ")", 26)
+                        ), null
+                ),
+                Arguments.of("Argument with Trailing Comma",
+                        Arrays.asList(
+                                // name(expr1,)
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "expr1", 5),
+                                new Token(Token.Type.OPERATOR, ",", 10),
+                                new Token(Token.Type.OPERATOR, ")", 11)
+                        ), null
+                ),
+                Arguments.of("Missing Expected after Last Token",
+                        Arrays.asList(
+                                // name(
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4)
+                        ),
+                        null
                 )
         );
     }
