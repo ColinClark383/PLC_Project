@@ -34,11 +34,14 @@ public final class Parser {
         // initialize lists to hold 0 or more fields/methods
         List<Ast.Field> fields = new ArrayList<>();
         List<Ast.Method> methods = new ArrayList<>();
+        boolean methodDone = false;
 
         while (tokens.has(0)) {
-            if (peek("LET")) {
+        // fields must come before methods
+            if (peek("LET") && !methodDone) {
                 fields.add(parseField());
             } else if (peek("DEF")) {
+                methodDone = true;
                 methods.add(parseMethod());
             } else {
                 throw new ParseException("Unexpected Token at: ", getIndex());
@@ -276,11 +279,10 @@ public final class Parser {
 
         // check for optional initialization statement
         if (peek(Token.Type.IDENTIFIER, "=")) {
-            String name = tokens.get(0).getLiteral();
-            tokens.advance();
+            Ast.Expression rec = parseExpression();
             tokens.advance();
             Ast.Expression value = parseExpression();
-            initial = new Ast.Statement.Declaration(name, Optional.ofNullable(value));
+            initial = new Ast.Statement.Assignment(rec, value);
         }
 
         // check for semicolon
